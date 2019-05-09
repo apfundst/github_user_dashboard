@@ -1,0 +1,14 @@
+<section class="phx-hero">
+<img src="<%= @user["avatar_url"] %>"/>
+  
+    <p>
+     It looks like your public blog is: <a href="//<%= @user["blog"] %>"><%= @user["blog"] %></a>
+    </p>
+    <p>
+      With your permission, we were also able to dig up your private email addresses:
+    
+    </p>
+</section>
+
+
+      
