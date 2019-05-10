@@ -11,6 +11,7 @@ defmodule GithubUserDashboardWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug :fetch_session
   end
 
   scope "/", GithubUserDashboardWeb do
@@ -22,7 +23,9 @@ defmodule GithubUserDashboardWeb.Router do
   end
 
   # Other scopes may use custom stacks.
-  # scope "/api", GithubUserDashboardWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", GithubUserDashboardWeb do
+    pipe_through :api
+
+    get "/events", EventsController, :index
+  end
 end

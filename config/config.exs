@@ -17,7 +17,6 @@ config :github_user_dashboard, GithubUserDashboardWeb.Endpoint,
   render_errors: [view: GithubUserDashboardWeb.ErrorView, accepts: ~w(html json)],
   pubsub: [name: GithubUserDashboard.PubSub, adapter: Phoenix.PubSub.PG2]
 
-
 config :github_user_dashboard,
   client_id: System.get_env("client_id"),
   client_secret: System.get_env("client_secret")

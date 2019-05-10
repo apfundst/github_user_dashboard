@@ -5,6 +5,7 @@ defmodule GithubUserDashboardWeb.PageController do
     case get_session(conn, :access_token) do
       nil ->
         render(conn, "index.html")
+
       _ ->
         redirect(conn, to: "/user")
     end

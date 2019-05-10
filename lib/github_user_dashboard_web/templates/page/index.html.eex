@@ -4,7 +4,7 @@
 </section>
 
 <section class="row">
-<a href="https://github.com/login/oauth/authorize?scope=user:email&client_id=6319832b47d574cf307e">Click here</a> to begin!</a>
+<a href="https://github.com/login/oauth/authorize?scope=user:email&client_id=6319832b47d574cf307e&scope=user%20repo">Click here</a> to begin!</a>
 
 </section>
 
