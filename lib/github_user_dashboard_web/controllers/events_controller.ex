@@ -9,13 +9,22 @@ defmodule GithubUserDashboardWeb.EventsController do
 
     headers = [authorization: "token " <> access_token]
 
-    case HTTPoison.get("https://api.github.com/users/#{user_name}/events", headers) do
+    case get_events(user_name, headers) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         res = Poison.decode!(body)
-        IO.inspect(only_last_week_events(res))
+         all_events = need_more_events(res, user_name, headers, 1)
+         IO.inspect(all_events)
 
-        json(conn, structure_events(res))
+        json(conn, structure_events(all_events))
     end
+  end
+
+  defp get_events(user_name, headers) do
+    HTTPoison.get("https://api.github.com/users/#{user_name}/events", headers)
+  end
+
+  defp get_events(user_name, headers, page) do
+    HTTPoison.get("https://api.github.com/users/#{user_name}/events?page=#{page}", headers)
   end
 
 
@@ -24,22 +33,27 @@ defmodule GithubUserDashboardWeb.EventsController do
       commit_count: get_commit_count(events),
       pr_data: get_pr_data(events)
     }
-
   end
 
-  defp need_more_events(events) do
+  defp need_more_events(events, user_name, headers, page) do
     needs_more = events
-    |> List.last
-    |> Map.get("created_at")
-    |> DateTime.from_iso8601()
-    |> elem(1)
-    |> DateTime.to_date()
-    |> (&Date.diff(DateTime.to_date(DateTime.utc_now()), &1)).()
-    IO.inspect(needs_more)
+    |> only_last_week_events()
+    |> length
+
+    cond do
+      needs_more == length(events) ->
+        case get_events(user_name, headers, page + 1) do
+          {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+            res = Poison.decode!(body)
+            need_more_events(Enum.concat(events, res ), user_name, headers, page + 1)
+        end
+      needs_more < length(events) ->
+        events
+    end
   end
 
   defp only_last_week_events(events) do
-    recent_events = events
+    events
     |> Enum.filter(fn x -> time_since_event(x) < 7 end)
   end
 
