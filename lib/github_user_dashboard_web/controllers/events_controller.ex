@@ -43,12 +43,14 @@ defmodule GithubUserDashboardWeb.EventsController do
     cond do
       needs_more < 30 ->
         events
+
       needs_more == length(events) ->
         case get_events(user_name, headers, page + 1) do
           {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
             res = Poison.decode!(body)
             need_more_events(Enum.concat(events, res), user_name, headers, page + 1)
         end
+
       needs_more < length(events) ->
         events
     end
