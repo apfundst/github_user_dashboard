@@ -12,9 +12,9 @@ defmodule GithubUserDashboardWeb.EventsController do
     case get_events(user_name, headers) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         res = Poison.decode!(body)
-         all_events = need_more_events(res, user_name, headers, 1)
-         IO.inspect(all_events)
-
+        # require IEx
+        # IEx.pry
+        all_events = need_more_events(res, user_name, headers, 1)
         json(conn, structure_events(all_events))
     end
   end
@@ -27,7 +27,6 @@ defmodule GithubUserDashboardWeb.EventsController do
     HTTPoison.get("https://api.github.com/users/#{user_name}/events?page=#{page}", headers)
   end
 
-
   defp structure_events(events) do
     %{
       commit_count: get_commit_count(events),
@@ -36,16 +35,19 @@ defmodule GithubUserDashboardWeb.EventsController do
   end
 
   defp need_more_events(events, user_name, headers, page) do
-    needs_more = events
-    |> only_last_week_events()
-    |> length
+    needs_more =
+      events
+      |> only_last_week_events()
+      |> length
 
     cond do
+      needs_more < 30 ->
+        events
       needs_more == length(events) ->
         case get_events(user_name, headers, page + 1) do
           {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
             res = Poison.decode!(body)
-            need_more_events(Enum.concat(events, res ), user_name, headers, page + 1)
+            need_more_events(Enum.concat(events, res), user_name, headers, page + 1)
         end
       needs_more < length(events) ->
         events
@@ -74,16 +76,16 @@ defmodule GithubUserDashboardWeb.EventsController do
   end
 
   defp get_pr_data(events) do
-    pr_events = events
-    |> only_last_week_events()
-    |> Enum.filter(fn x -> x["type"] === "PullRequestEvent" end)
+    pr_events =
+      events
+      |> only_last_week_events()
+      |> Enum.filter(fn x -> x["type"] === "PullRequestEvent" end)
 
     %{
       prs_opened: get_pr_opened_count(pr_events),
       prs_merged: get_pr_merged_count(pr_events),
       additions: get_additions(pr_events),
       deletions: get_deletions(pr_events)
-
     }
   end
 
@@ -112,5 +114,12 @@ defmodule GithubUserDashboardWeb.EventsController do
   defp get_deletions(pr_events) do
     get_merged_prs(pr_events)
     |> Enum.reduce(0, fn x, acc -> x["payload"]["pull_request"]["deletions"] + acc end)
+  end
+
+  def get_header(headers, key) do
+    headers
+    |> Enum.filter(fn {k, _} -> k == key end)
+    |> hd
+    |> elem(1)
   end
 end

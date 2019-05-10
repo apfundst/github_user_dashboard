@@ -1,7 +1,7 @@
 defmodule GithubUserDashboardWeb.SessionController do
   use GithubUserDashboardWeb, :controller
 
-  def index(conn, params = %{"code" => code}) do
+  def index(conn, _params = %{"code" => code}) do
     case authenticate(conn) do
       nil ->
         clientID = GithubUserDashboard.Config.client_id()
@@ -21,6 +21,7 @@ defmodule GithubUserDashboardWeb.SessionController do
              ]) do
           {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
             res = URI.decode_query(body)
+
             put_session(conn, :access_token, res["access_token"])
             |> redirect(to: "/user")
         end
@@ -34,6 +35,7 @@ defmodule GithubUserDashboardWeb.SessionController do
     case authenticate(conn) do
       nil ->
         redirect(conn, to: "/")
+
       _ ->
         redirect(conn, to: "/user")
     end
