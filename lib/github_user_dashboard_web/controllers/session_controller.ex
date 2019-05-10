@@ -20,11 +20,7 @@ defmodule GithubUserDashboardWeb.SessionController do
                {"Content-Type", "application/json"}
              ]) do
           {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-            IO.inspect(body)
             res = URI.decode_query(body)
-            IO.inspect(res)
-            IO.inspect(res["access_token"])
-
             put_session(conn, :access_token, res["access_token"])
             |> redirect(to: "/user")
         end
@@ -38,7 +34,6 @@ defmodule GithubUserDashboardWeb.SessionController do
     case authenticate(conn) do
       nil ->
         redirect(conn, to: "/")
-
       _ ->
         redirect(conn, to: "/user")
     end
