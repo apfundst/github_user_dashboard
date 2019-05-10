@@ -12,7 +12,7 @@ defmodule GithubUserDashboardWeb.EventsController do
     case HTTPoison.get("https://api.github.com/users/#{user_name}/events", headers) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         res = Poison.decode!(body)
-        IO.inspect(get_commit_count(res))
+        IO.inspect(only_last_week_events(res))
 
         json(conn, structure_events(res))
     end
@@ -21,7 +21,8 @@ defmodule GithubUserDashboardWeb.EventsController do
 
   defp structure_events(events) do
     %{
-      commit_count: get_commit_count(events)
+      commit_count: get_commit_count(events),
+      pr_data: get_pr_data(events)
     }
 
   end
@@ -56,5 +57,46 @@ defmodule GithubUserDashboardWeb.EventsController do
     |> only_last_week_events()
     |> Enum.filter(fn x -> x["type"] === "PushEvent" end)
     |> Enum.reduce(0, fn x, acc -> x["payload"]["size"] + acc end)
+  end
+
+  defp get_pr_data(events) do
+    pr_events = events
+    |> only_last_week_events()
+    |> Enum.filter(fn x -> x["type"] === "PullRequestEvent" end)
+
+    %{
+      prs_opened: get_pr_opened_count(pr_events),
+      prs_merged: get_pr_merged_count(pr_events),
+      additions: get_additions(pr_events),
+      deletions: get_deletions(pr_events)
+
+    }
+  end
+
+  defp get_pr_opened_count(pr_events) do
+    pr_events
+    |> Enum.filter(fn x -> x["payload"]["action"] === "opened" end)
+    |> length()
+  end
+
+  defp get_merged_prs(pr_events) do
+    pr_events
+    |> Enum.filter(fn x -> x["payload"]["action"] === "closed" end)
+    |> Enum.filter(fn x -> x["payload"]["pull_request"]["merged_at"] != nil end)
+  end
+
+  defp get_pr_merged_count(pr_events) do
+    get_merged_prs(pr_events)
+    |> length()
+  end
+
+  defp get_additions(pr_events) do
+    get_merged_prs(pr_events)
+    |> Enum.reduce(0, fn x, acc -> x["payload"]["pull_request"]["additions"] + acc end)
+  end
+
+  defp get_deletions(pr_events) do
+    get_merged_prs(pr_events)
+    |> Enum.reduce(0, fn x, acc -> x["payload"]["pull_request"]["deletions"] + acc end)
   end
 end
